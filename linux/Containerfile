@@ -1,0 +1,31 @@
+FROM redhat/ubi9:9.5
+LABEL maintainer="itgrape@outlook.com"
+
+RUN export https_proxy=http://192.168.246.29:7890 http_proxy=http://192.168.246.29:7890 && \
+	dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+	dnf upgrade -y && \
+    dnf install -y wget iproute iputils unzip zstd bzip2 xz procps-ng bind-utils findutils vim rsync unzip git openssh-server patch file jq gcc-c++ gcc-gfortran systemd systemd-libs && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf /tmp/* && \
+	unset http_proxy && unset https_proxy && \
+    (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done) && \
+    rm -f /lib/systemd/system/multi-user.target.wants/* && \
+    rm -f /etc/systemd/system/*.wants/* && \
+    rm -f /lib/systemd/system/local-fs.target.wants/* && \
+    rm -f /lib/systemd/system/sockets.target.wants/*udev* && \
+    rm -f /lib/systemd/system/sockets.target.wants/*initctl* && \
+    rm -f /lib/systemd/system/basic.target.wants/* && \
+    rm -f /lib/systemd/system/anaconda.target.wants/* && \
+    ssh-keygen -A && \
+	echo 'root:root' | chpasswd && \
+    echo "rm -f /var/run/nologin" >> /etc/rc.local && \
+    chmod +x /etc/rc.local && \
+	sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+	sed -i 's/^#StrictModes yes/StrictModes no/' /etc/ssh/sshd_config && \
+	sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+	sed -i 's/^#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#UsePAM no/UsePAM yes/' /etc/ssh/sshd_config && \
+	systemctl enable sshd
+
+EXPOSE 22
+CMD ["/usr/sbin/init"]

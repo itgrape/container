@@ -1,0 +1,1 @@
+docker build -t linux:ubi-9.5 -f .\Containerfile .
